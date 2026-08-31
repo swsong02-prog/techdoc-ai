@@ -11,9 +11,15 @@ import type { LanguageModel } from "ai";
 
 export type LlmProvider = "anthropic" | "openai";
 
+/**
+ * 기본 모델은 비용 안전을 위해 중간 티어로 설정 (Sonnet급 가격대끼리 맞춤):
+ * - claude-sonnet-5: $2/$10 per 1M tokens
+ * - gpt-5.6-terra: $2/$12 per 1M tokens (OpenAI 현 라인업의 mid-tier)
+ * 최상위 모델이 필요하면 CLAUDE_MODEL=claude-opus-5 / OPENAI_MODEL=gpt-5.6-sol 로 오버라이드.
+ */
 const DEFAULT_MODELS: Record<LlmProvider, string> = {
-  anthropic: "claude-opus-5",
-  openai: "gpt-5.1",
+  anthropic: "claude-sonnet-5",
+  openai: "gpt-5.6-terra",
 };
 
 export type ProviderConfig =
