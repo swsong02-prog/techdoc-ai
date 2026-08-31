@@ -5,6 +5,7 @@ import { experimental_useObject as useObject } from "@ai-sdk/react";
 import SiteHeader from "@/components/SiteHeader";
 import Hero from "@/components/Hero";
 import InputForm from "@/components/InputForm";
+import AnalysisCard from "@/components/AnalysisCard";
 import ResultViewer from "@/components/ResultViewer";
 import PaywallBanner from "@/components/PaywallBanner";
 import { LOADING_STEPS, type TabId } from "@/lib/constants";
@@ -70,6 +71,12 @@ export default function Home() {
 
       {object && (
         <section ref={resultRef} className="max-w-4xl mx-auto px-4 sm:px-6 pb-24">
+          {/* 진단 카드 — 스키마 첫 필드라 스트리밍 시 가장 먼저 채워진다 */}
+          <AnalysisCard
+            strengths={object.analysis?.strengths}
+            gaps={object.analysis?.gaps}
+            streaming={isLoading}
+          />
           <ResultViewer
             projectName={projectName}
             docs={object}

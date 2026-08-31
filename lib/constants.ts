@@ -7,7 +7,8 @@ export const PRESET_STACKS = [
   "Redis", "Terraform", "GitHub Actions", "Nginx", "Lambda",
 ] as const;
 
-export type TabId = keyof Docs;
+/** 문서 탭 id — analysis(진단)는 탭이 아니라 상단 카드로 표시 */
+export type TabId = Exclude<keyof Docs, "analysis">;
 
 export interface TabDef {
   id: TabId;

@@ -1,7 +1,22 @@
 import { z } from "zod";
 
-/** LLM이 생성하는 문서 3종 스키마 — streamObject / useObject 공용 */
+/**
+ * LLM이 생성하는 진단 + 문서 3종 스키마 — streamObject / useObject 공용.
+ * analysis를 첫 필드로 두어 스트리밍 시 진단이 가장 먼저 도착한다.
+ */
 export const docsSchema = z.object({
+  analysis: z
+    .object({
+      strengths: z
+        .array(z.string())
+        .describe("이 프로젝트의 어필 포인트 2~3개"),
+      gaps: z
+        .array(z.string())
+        .describe(
+          "부족한 부분 최대 3개. 각 항목은 '무엇이 부족한지 + 면접에서 어떤 리스크인지 + 어떻게 보완할지' 형태. 해당사항 없으면 빈 배열"
+        ),
+    })
+    .describe("문서 작성 전 프로젝트 강점/보완점 진단"),
   readme: z
     .string()
     .describe(

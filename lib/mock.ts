@@ -121,5 +121,34 @@ ${
 **모범 답안**: "완벽했다"는 답변은 감점 요인입니다. 테스트 코드 커버리지, 초기 설계 단계에서의 문서화 등 구체적인 개선점 1-2가지와 그 이유를 준비하세요.
 `;
 
-  return { readme, blog, qa };
+  /* ── 진단 (입력값 반영 mock) ── */
+  const hasNumbers = /\d/.test(features);
+  const featureLines = featureText.split("\n").filter(Boolean).length;
+
+  const strengths: string[] = [
+    `${stackList.slice(0, 3).join(", ")} 조합은 실무 채용 공고와 접점이 많은 스택 구성입니다`,
+    `"${featureText.split("\n")[0].slice(0, 40)}"처럼 해결하려는 문제가 명확해 프로젝트 동기를 설명하기 좋습니다`,
+  ];
+  if (hasTrouble) {
+    strengths.push("트러블슈팅 경험이 있어 문제 해결 과정을 STAR 구조로 풀어낼 수 있습니다");
+  }
+
+  const gaps: string[] = [];
+  if (!hasTrouble) {
+    gaps.push(
+      "트러블슈팅 경험이 입력되지 않았습니다. 면접에서 '가장 어려웠던 문제' 질문에 구체적 답변이 어려워지는 리스크가 있으니, 개발 중 겪은 문제 하나를 원인 분석 → 해결 → 배운 점 구조로 정리해 보완하세요."
+    );
+  }
+  if (!hasNumbers) {
+    gaps.push(
+      "정량 성과(응답 시간, 개선율 등 숫자)가 없습니다. 면접관에게 개선의 크기를 전달하기 어려운 리스크가 있으니, 개선 전후를 측정한 수치 한 개라도 만들어 문서에 반영하세요."
+    );
+  }
+  if (featureLines < 2) {
+    gaps.push(
+      "핵심 기능이 한 줄뿐이라 프로젝트의 규모가 작아 보일 리스크가 있습니다. 기능을 2~3개로 쪼개 각각의 기술적 포인트를 드러내면 보완됩니다."
+    );
+  }
+
+  return { analysis: { strengths, gaps: gaps.slice(0, 3) }, readme, blog, qa };
 }
