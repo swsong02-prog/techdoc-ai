@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@import "highlight.js/styles/github-dark.css";
+
+body {
+  font-family: "Pretendard", -apple-system, "Apple SD Gothic Neo", system-ui, sans-serif;
+}
