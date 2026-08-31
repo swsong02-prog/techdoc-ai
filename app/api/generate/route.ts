@@ -78,7 +78,8 @@ export async function POST(req: Request) {
         | { cacheCreationInputTokens?: number; cacheReadInputTokens?: number }
         | undefined;
       const created = meta?.cacheCreationInputTokens ?? 0;
-      const read = meta?.cacheReadInputTokens ?? 0;
+      // AI SDK 5는 캐시 읽기를 표준 usage.cachedInputTokens로 보고한다
+      const read = usage.cachedInputTokens ?? meta?.cacheReadInputTokens ?? 0;
       console.log(
         `[generate] ${llm.provider}/${llm.modelId} · 유형=${projectType} · 입력 ${usage.inputTokens}tok / 출력 ${usage.outputTokens}tok · ` +
           `캐시 생성=${created}tok, 캐시 적중=${read}tok ` +
