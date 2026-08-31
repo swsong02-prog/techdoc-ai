@@ -1,7 +1,7 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { streamObject } from "ai";
 import { generateMockDocs } from "@/lib/mock";
-import { SYSTEM_PROMPT, buildUserPrompt } from "@/lib/prompts";
+import { SYSTEM_PROMPT, buildFewShotSystemPrompt, buildUserPrompt, classifyProjectType } from "@/lib/prompts";
 import { docsSchema, generateInputSchema } from "@/lib/schema";
 
 export const maxDuration = 120;
@@ -37,7 +37,13 @@ export async function POST(req: Request) {
   }
   const input = parsed.data;
 
+  // 스택 기반 프로젝트 유형 판별 → 해당 유형의 few-shot 예시 선택
+  const projectType = classifyProjectType(input.stacks);
+
   if (process.env.MOCK_MODE === "true") {
+    console.log(
+      `[generate] MOCK_MODE=true · 유형=${projectType} · 프롬프트 캐싱은 실제 API 호출에서만 적용됩니다`
+    );
     return mockStreamResponse(JSON.stringify(generateMockDocs(input)));
   }
 
@@ -51,9 +57,34 @@ export async function POST(req: Request) {
   const result = streamObject({
     model: anthropic("claude-opus-5"),
     schema: docsSchema,
-    system: SYSTEM_PROMPT,
-    prompt: buildUserPrompt(input),
+    messages: [
+      // 1. 기본 시스템 프롬프트 (고정)
+      { role: "system", content: SYSTEM_PROMPT },
+      // 2. 유형별 few-shot 예시 — 캐시 브레이크포인트.
+      //    같은 유형의 요청이면 1+2 전체 프리픽스가 캐시에서 읽힌다.
+      {
+        role: "system",
+        content: buildFewShotSystemPrompt(projectType),
+        providerOptions: {
+          anthropic: { cacheControl: { type: "ephemeral" } },
+        },
+      },
+      // 3. 사용자 입력 (매 요청 변동 — 캐시 브레이크포인트 뒤에 위치)
+      { role: "user", content: buildUserPrompt(input) },
+    ],
     maxOutputTokens: 16000,
+    onFinish: ({ usage, providerMetadata }) => {
+      const meta = providerMetadata?.anthropic as
+        | { cacheCreationInputTokens?: number; cacheReadInputTokens?: number }
+        | undefined;
+      const created = meta?.cacheCreationInputTokens ?? 0;
+      const read = meta?.cacheReadInputTokens ?? 0;
+      console.log(
+        `[generate] 유형=${projectType} · 입력 ${usage.inputTokens}tok / 출력 ${usage.outputTokens}tok · ` +
+          `캐시 생성=${created}tok, 캐시 적중=${read}tok ` +
+          (read > 0 ? "✅ 캐시 적중" : created > 0 ? "🆕 캐시 신규 생성 (다음 요청부터 적중)" : "⚠️ 캐싱 미적용")
+      );
+    },
   });
 
   return result.toTextStreamResponse();

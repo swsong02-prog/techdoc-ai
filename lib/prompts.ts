@@ -1,3 +1,4 @@
+import { EXAMPLES, type ProjectType } from "./examples";
 import type { GenerateInput } from "./schema";
 
 /**
@@ -37,6 +38,87 @@ GitHub 관례를 따르는 완성형 README:
 - 세 문서 모두 유효한 마크다운 전문(제목 H1부터 시작)이어야 하며, 서로 독립적으로 읽혀야 합니다
 - 입력된 기술 스택 이름을 정확히 사용하고, 첫 번째 스택을 프로젝트의 중심 기술로 간주합니다
 - 과장·허위("수백만 사용자") 금지. 취준생 포트폴리오라는 맥락에 맞는 현실적인 톤 유지`;
+
+/* ─────────────────────────────────────────────
+   프로젝트 유형 판별 + few-shot 프롬프트 조립
+   (예시 "내용"은 lib/examples.ts에만 존재 — 여기는 로직만)
+───────────────────────────────────────────── */
+
+/** 유형 판별용 키워드 (소문자 부분일치). 스택당 1점, 최고점 유형 선택 */
+const TYPE_KEYWORDS: Record<ProjectType, string[]> = {
+  "ai-data": [
+    "python", "pytorch", "tensorflow", "pandas", "numpy", "scikit",
+    "langchain", "openai", "anthropic", "claude", "llm", "huggingface",
+    "airflow", "spark", "kafka", "lightgbm", "jupyter", "ml",
+  ],
+  "backend-infra": [
+    "aws", "gcp", "azure", "docker", "kubernetes", "terraform", "lambda",
+    "nginx", "redis", "mysql", "postgres", "mongodb", "spring", "node.js",
+    "express", "nestjs", "fastapi", "django", "go", "java", "grafana",
+    "github actions", "jenkins", "rabbitmq",
+  ],
+  web: [
+    "next.js", "react", "vue", "svelte", "typescript", "javascript",
+    "tailwind", "html", "css", "flutter", "react native", "zustand", "redux",
+  ],
+};
+
+/** 동점일 때 우선순위: 특수한 유형이 일반 유형을 이긴다 */
+const TYPE_PRIORITY: ProjectType[] = ["ai-data", "backend-infra", "web"];
+
+export function classifyProjectType(stacks: string[]): ProjectType {
+  const scores: Record<ProjectType, number> = { web: 0, "backend-infra": 0, "ai-data": 0 };
+
+  for (const stack of stacks) {
+    const s = stack.toLowerCase();
+    for (const type of TYPE_PRIORITY) {
+      if (TYPE_KEYWORDS[type].some((kw) => s.includes(kw))) {
+        scores[type] += 1;
+        break; // 스택 하나는 한 유형에만 기여
+      }
+    }
+  }
+
+  let best: ProjectType = "web"; // 매칭 없으면 기본값
+  let bestScore = 0;
+  for (const type of TYPE_PRIORITY) {
+    if (scores[type] > bestScore) {
+      best = type;
+      bestScore = scores[type];
+    }
+  }
+  return best;
+}
+
+/**
+ * 판별된 유형의 예시 2세트를 few-shot 블록으로 조립.
+ * 이 블록은 route에서 cacheControl(프롬프트 캐싱) 브레이크포인트로 사용된다 —
+ * 유형이 같으면 바이트 단위로 동일한 문자열이 나와 캐시가 적중한다.
+ */
+export function buildFewShotSystemPrompt(type: ProjectType): string {
+  const { label, sets } = EXAMPLES[type];
+
+  const rendered = sets
+    .map(
+      (set, i) => `<example index="${i + 1}">
+<readme>
+${set.readme.trim()}
+</readme>
+<blog>
+${set.blog.trim()}
+</blog>
+<qa>
+${set.qa.trim()}
+</qa>
+</example>`
+    )
+    .join("\n\n");
+
+  return `다음은 이번 프로젝트와 같은 "${label}" 유형의 모범 문서 예시 2세트입니다.
+구조·톤·품질 수준(STAR 답안, 수치 중심 서술, 테이블/다이어그램 활용)을 참고하되, 예시의 소재나 문장을 그대로 복사하지 마세요. 사용자가 입력한 프로젝트 정보만이 사실의 근거입니다.
+
+${rendered}`;
+}
 
 /** 사용자 입력을 프롬프트로 변환. 트러블슈팅 유무에 따라 Q&A 분기 지시를 명시한다. */
 export function buildUserPrompt({ name, stacks, features, trouble }: GenerateInput): string {
