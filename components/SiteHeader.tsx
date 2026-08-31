@@ -1,12 +1,18 @@
 "use client";
 
-import { Terminal } from "lucide-react";
+import { LogOut, Terminal } from "lucide-react";
 
 interface Props {
-  freeUsed: boolean;
+  /** 남은 무료 횟수 (서버 동기화 값). null이면 미로그인/미설정 → 기본 1회 표시 */
+  remaining: number | null;
+  userEmail: string | null;
+  onLogout: () => void;
 }
 
-export default function SiteHeader({ freeUsed }: Props) {
+export default function SiteHeader({ remaining, userEmail, onLogout }: Props) {
+  const shown = remaining ?? 1;
+  const exhausted = shown <= 0;
+
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-md">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
@@ -21,16 +27,31 @@ export default function SiteHeader({ freeUsed }: Props) {
         <div className="flex items-center gap-3">
           <span
             className={`text-xs px-2.5 py-1 rounded-full border ${
-              freeUsed
+              exhausted
                 ? "border-zinc-700 text-zinc-500"
                 : "border-blue-800 text-blue-400 bg-blue-950"
             }`}
           >
-            오늘 무료 생성 {freeUsed ? "0" : "1"}/1회
+            오늘 무료 생성 {shown}/1회
           </span>
-          <button className="hidden sm:block text-xs font-medium bg-white text-zinc-900 rounded-lg px-3.5 py-1.5 hover:bg-zinc-200 transition-colors">
-            무제한 구독 ₩9,900/월
-          </button>
+          {userEmail ? (
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline text-xs text-zinc-500 max-w-36 truncate">
+                {userEmail}
+              </span>
+              <button
+                type="button"
+                onClick={onLogout}
+                className="text-xs text-zinc-400 hover:text-white border border-zinc-700 hover:border-zinc-500 rounded-lg px-2.5 py-1.5 flex items-center gap-1 transition-colors"
+              >
+                <LogOut className="w-3 h-3" /> 로그아웃
+              </button>
+            </div>
+          ) : (
+            <button className="hidden sm:block text-xs font-medium bg-white text-zinc-900 rounded-lg px-3.5 py-1.5 hover:bg-zinc-200 transition-colors">
+              무제한 구독 ₩9,900/월
+            </button>
+          )}
         </div>
       </div>
     </header>
