@@ -1,5 +1,5 @@
-import { anthropic } from "@ai-sdk/anthropic";
 import { streamObject } from "ai";
+import { getProviderConfig } from "@/lib/llm";
 import { generateMockDocs } from "@/lib/mock";
 import { SYSTEM_PROMPT, buildFewShotSystemPrompt, buildUserPrompt, classifyProjectType } from "@/lib/prompts";
 import { docsSchema, generateInputSchema } from "@/lib/schema";
@@ -47,21 +47,21 @@ export async function POST(req: Request) {
     return mockStreamResponse(JSON.stringify(generateMockDocs(input)));
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return Response.json(
-      { error: "ANTHROPIC_API_KEY가 설정되지 않았습니다. MOCK_MODE=true로 테스트하세요." },
-      { status: 500 }
-    );
+  // LLM_PROVIDER(anthropic|openai)에 따라 모델 결정 — 프롬프트/few-shot/스키마는 공유
+  const llm = getProviderConfig();
+  if (!llm.ok) {
+    return Response.json({ error: llm.error }, { status: 500 });
   }
 
   const result = streamObject({
-    model: anthropic("claude-opus-5"),
+    model: llm.model,
     schema: docsSchema,
     messages: [
       // 1. 기본 시스템 프롬프트 (고정)
       { role: "system", content: SYSTEM_PROMPT },
       // 2. 유형별 few-shot 예시 — 캐시 브레이크포인트.
       //    같은 유형의 요청이면 1+2 전체 프리픽스가 캐시에서 읽힌다.
+      //    (anthropic 전용 옵션 — openai 프로바이더에서는 무시되고 자동 캐싱에 의존)
       {
         role: "system",
         content: buildFewShotSystemPrompt(projectType),
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
       const created = meta?.cacheCreationInputTokens ?? 0;
       const read = meta?.cacheReadInputTokens ?? 0;
       console.log(
-        `[generate] 유형=${projectType} · 입력 ${usage.inputTokens}tok / 출력 ${usage.outputTokens}tok · ` +
+        `[generate] ${llm.provider}/${llm.modelId} · 유형=${projectType} · 입력 ${usage.inputTokens}tok / 출력 ${usage.outputTokens}tok · ` +
           `캐시 생성=${created}tok, 캐시 적중=${read}tok ` +
           (read > 0 ? "✅ 캐시 적중" : created > 0 ? "🆕 캐시 신규 생성 (다음 요청부터 적중)" : "⚠️ 캐싱 미적용")
       );
