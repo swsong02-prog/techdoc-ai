@@ -73,7 +73,19 @@ export async function POST(req: Request) {
       { role: "user", content: buildUserPrompt(input) },
     ],
     maxOutputTokens: 16000,
-    onFinish: ({ usage, providerMetadata }) => {
+    onFinish: ({ object, error, usage, providerMetadata }) => {
+      // 문서 길이 로그 + 저품질(스키마 검증 실패) 감지.
+      // 스트림은 이미 클라이언트로 전송된 뒤라, 품질 미달 에러 표시는
+      // 같은 스키마(min 800)를 공유하는 클라이언트 useObject 검증이 담당한다.
+      if (object) {
+        console.log(
+          `[generate] 문서 길이 readme=${object.readme.length}자 / blog=${object.blog.length}자 / qa=${object.qa.length}자`
+        );
+      } else {
+        console.warn(
+          `[generate] ⚠️ 저품질 생성 감지 — 스키마 검증 실패 (placeholder/생략 의심): ${error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200)}`
+        );
+      }
       const meta = providerMetadata?.anthropic as
         | { cacheCreationInputTokens?: number; cacheReadInputTokens?: number }
         | undefined;

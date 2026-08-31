@@ -17,16 +17,20 @@ export const docsSchema = z.object({
         ),
     })
     .describe("문서 작성 전 프로젝트 강점/보완점 진단"),
+  // .min(800): placeholder/요약으로 때운 저품질 생성을 검증 단계에서 걸러낸다
   readme: z
     .string()
+    .min(800)
     .describe(
       "GitHub README.md 마크다운 전문. 뱃지, 기술 스택 테이블, 아키텍처 다이어그램 코드블록 포함"
     ),
   blog: z
     .string()
+    .min(800)
     .describe("벨로그 스타일 구어체 개발 후기 블로그 포스팅 마크다운 전문"),
   qa: z
     .string()
+    .min(800)
     .describe("STAR 기법 기반 면접 예상 질문 5개와 모범 답안 마크다운 전문"),
 });
 

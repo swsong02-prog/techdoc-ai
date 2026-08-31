@@ -16,17 +16,23 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<TabId>("readme");
   const [freeUsed, setFreeUsed] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
+  const [qualityError, setQualityError] = useState(false);
   const resultRef = useRef<HTMLElement>(null);
 
   const { object, submit, isLoading, error } = useObject({
     api: "/api/generate",
     schema: docsSchema,
-    onFinish: () => setFreeUsed(true),
+    // object가 undefined면 스키마(min 800) 검증 실패 = 저품질 생성
+    onFinish: ({ object: finished }) => {
+      setFreeUsed(true);
+      setQualityError(!finished);
+    },
   });
 
   const handleGenerate = (input: GenerateInput) => {
     setProjectName(input.name);
     setActiveTab("readme");
+    setQualityError(false);
     submit(input);
   };
 
@@ -65,6 +71,14 @@ export default function Home() {
         <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-8 -mt-10">
           <div className="rounded-xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-300">
             문서 생성에 실패했습니다. 잠시 후 다시 시도해주세요. ({error.message})
+          </div>
+        </section>
+      )}
+
+      {qualityError && !error && (
+        <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-8 -mt-10">
+          <div className="rounded-xl border border-amber-900 bg-amber-950/40 px-4 py-3 text-sm text-amber-300">
+            생성 품질이 기준 미달이라 재시도가 필요합니다. 같은 입력으로 다시 생성해주세요.
           </div>
         </section>
       )}

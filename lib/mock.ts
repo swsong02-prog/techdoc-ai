@@ -121,6 +121,50 @@ ${
 **모범 답안**: "완벽했다"는 답변은 감점 요인입니다. 테스트 코드 커버리지, 초기 설계 단계에서의 문서화 등 구체적인 개선점 1-2가지와 그 이유를 준비하세요.
 `;
 
+  /* ── 스키마 min(800) 충족을 위한 고정 보강 섹션 (mock 전용) ── */
+  const readmePadded =
+    readme +
+    `
+## 📈 향후 계획
+
+- 사용자 피드백 기반으로 문서 템플릿 다양화
+- 배포 자동화 파이프라인(CI/CD) 구축으로 릴리스 주기 단축
+- 핵심 지표(응답 시간, 에러율) 모니터링 대시보드 도입
+
+## 🗂 프로젝트 구조
+
+\`\`\`
+src/
+├── components/   # UI 컴포넌트
+├── lib/          # 비즈니스 로직·유틸
+└── pages(app)/   # 라우팅
+\`\`\`
+
+## 📄 라이선스
+
+MIT License — 자유롭게 참고하되, 별표(⭐) 하나는 큰 힘이 됩니다.
+`;
+
+  const blogPadded =
+    blog +
+    `
+---
+
+**P.S.** 이 글이 도움이 됐다면 댓글로 여러분의 프로젝트 이야기도 들려주세요. 같은 고민을 하는 사람이 많을수록 좋은 해결책이 더 빨리 나오더라고요. 다음 글에서는 이번 프로젝트의 배포 과정과 운영하면서 만난 예상 밖의 이슈들을 다뤄볼 예정입니다. 궁금한 점은 언제든 댓글로 남겨주세요!
+`;
+
+  const qaPadded =
+    qa +
+    `
+---
+
+## 💡 면접 답변 공통 팁
+
+- 모든 답변은 STAR(상황-과제-행동-결과) 구조를 기본으로 하되, 라벨을 붙이지 말고 자연스러운 문장으로 녹여내세요.
+- 수치를 말할 수 있는 부분은 반드시 수치로 말하세요. "많이 빨라졌다"보다 "3초에서 0.9초로 줄었다"가 기억에 남습니다.
+- 모르는 질문에는 아는 범위를 명확히 하고 학습 계획으로 마무리하는 것이 어설픈 추측보다 좋은 인상을 줍니다.
+`;
+
   /* ── 진단 (입력값 반영 mock) ── */
   const hasNumbers = /\d/.test(features);
   const featureLines = featureText.split("\n").filter(Boolean).length;
@@ -150,5 +194,19 @@ ${
     );
   }
 
-  return { analysis: { strengths, gaps: gaps.slice(0, 3) }, readme, blog, qa };
+  // 입력이 극단적으로 짧아도 스키마 min(800)을 반드시 통과하도록 보장
+  const ensureMinLen = (doc: string, min = 800): string => {
+    let out = doc;
+    while (out.length < min) {
+      out += "\n> ℹ️ 이 문서는 MOCK_MODE 샘플입니다. 실제 생성에서는 입력 정보를 충분히 반영한 완성 문서가 제공됩니다.\n";
+    }
+    return out;
+  };
+
+  return {
+    analysis: { strengths, gaps: gaps.slice(0, 3) },
+    readme: ensureMinLen(readmePadded),
+    blog: ensureMinLen(blogPadded),
+    qa: ensureMinLen(qaPadded),
+  };
 }
