@@ -4,7 +4,7 @@ export default function PaywallBanner() {
   return (
     <div className="mt-6 rounded-2xl border border-blue-900 bg-blue-950/40 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div>
-        <p className="text-sm font-bold text-white">오늘의 무료 생성을 모두 사용했어요</p>
+        <p className="text-sm font-bold text-white">무료 생성 1회를 모두 사용했어요</p>
         <p className="text-xs text-zinc-400 mt-1">
           프로젝트당 ₩2,000 또는 월 ₩9,900으로 무제한 이용하세요.
         </p>

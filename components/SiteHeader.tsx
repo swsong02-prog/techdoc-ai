@@ -32,7 +32,7 @@ export default function SiteHeader({ remaining, userEmail, onLogout }: Props) {
                 : "border-blue-800 text-blue-400 bg-blue-950"
             }`}
           >
-            오늘 무료 생성 {shown}/1회
+            {exhausted ? "무료 생성 소진" : "무료 생성 1회 남음"}
           </span>
           {userEmail ? (
             <div className="flex items-center gap-2">

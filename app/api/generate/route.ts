@@ -80,7 +80,7 @@ export async function POST(req: Request) {
       const row = await getProfile(createServiceClient(), userId);
       if (!hasFreeQuota(row)) {
         return Response.json(
-          { error: "오늘의 무료 생성을 모두 사용했습니다.", paywall: true },
+          { error: "무료 생성 1회를 모두 사용했습니다.", paywall: true },
           { status: 402 }
         );
       }

@@ -42,7 +42,7 @@ export default function LoginModal({ open, onClose }: Props) {
           </button>
         </div>
         <p className="text-sm text-zinc-400 mb-5">
-          로그인하면 하루 1회 무료로 문서 3종을 생성할 수 있습니다.
+          로그인하면 무료 1회로 문서 3종을 생성해볼 수 있습니다.
         </p>
 
         <button
