@@ -1,8 +1,12 @@
+import { productionEnvGuard } from "@/lib/env";
 import { createServiceClient, getSessionUser, isAuthConfigured } from "@/lib/supabase/server";
 import { FREE_LIMIT, getProfile, hasFreeQuota } from "@/lib/usage";
 
 /** 클라이언트 무료 횟수 표시를 서버 값과 동기화하기 위한 조회 API */
 export async function GET() {
+  const envError = productionEnvGuard();
+  if (envError) return envError;
+
   if (!isAuthConfigured()) {
     return Response.json({ configured: false, authenticated: false, remaining: null });
   }

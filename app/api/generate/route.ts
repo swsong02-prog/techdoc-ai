@@ -1,4 +1,5 @@
 import { streamObject } from "ai";
+import { productionEnvGuard } from "@/lib/env";
 import { getProviderConfig } from "@/lib/llm";
 import { generateMockDocs } from "@/lib/mock";
 import { SYSTEM_PROMPT, buildFewShotSystemPrompt, buildUserPrompt, classifyProjectType } from "@/lib/prompts";
@@ -50,6 +51,10 @@ function mockStreamResponse(json: string, userId: string | null): Response {
 }
 
 export async function POST(req: Request) {
+  /* ── ⓪ 프로덕션 필수 env 검사 (누락 시 조용한 폴백 대신 명확한 500) ── */
+  const envError = productionEnvGuard();
+  if (envError) return envError;
+
   /* ── ① Rate limit: IP당 분당 5회 (로그인 여부 무관) ── */
   const ip = (req.headers.get("x-forwarded-for") ?? "unknown").split(",")[0].trim();
   const rl = await checkRateLimit(ip);

@@ -137,6 +137,32 @@ d670e4f TechDoc AI: Next.js 15 + Vercel AI SDK 초기 구현
 - [ ] OAuth 동의 화면 supabase.co 도메인 노출 — 배포 전 Google 앱 검증/커스텀 도메인
 - [ ] 저장소 루트 README.md 작성 (포트폴리오용 공개 저장소)
 
+## Vercel 배포 가이드 (사람이 할 일)
+
+배포 절차 — 순서대로:
+
+1. **Supabase 사전 작업**
+   - Authentication → URL Configuration에서 Site URL·Redirect URL에 배포 도메인 추가 (`https://<도메인>/auth/callback`)
+   - Google Cloud Console OAuth 클라이언트의 승인된 리디렉션 URI 확인
+2. **Upstash Redis 생성** ([upstash.com](https://upstash.com)) → REST URL/TOKEN 확보
+   (없으면 인메모리 폴백으로 동작하지만, 서버리스 다중 인스턴스에서는 rate limit이 사실상 무력화됨 — 배포 시 필수)
+3. **Vercel 프로젝트 생성** — GitHub `swsong02-prog/techdoc-ai` 연결 (Next.js 자동 감지)
+4. **환경변수 입력** (Settings → Environment Variables, Production 스코프):
+
+   | 순서 | 변수 | 값 | 비고 |
+   |---|---|---|---|
+   | 1 | `ANTHROPIC_API_KEY` | 실제 키 | 필수 (미설정 시 API가 500으로 명확히 실패) |
+   | 2 | `MOCK_MODE` | `false` | 필수 |
+   | 3 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase 프로젝트 URL | 필수 |
+   | 4 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon 키 | 필수 |
+   | 5 | `SUPABASE_SERVICE_ROLE_KEY` | service_role 키 | 필수 · 서버 전용 |
+   | 6 | `UPSTASH_REDIS_REST_URL` | Upstash REST URL | 강력 권장 |
+   | 7 | `UPSTASH_REDIS_REST_TOKEN` | Upstash 토큰 | 강력 권장 |
+   | 8 | `LLM_PROVIDER` / `CLAUDE_MODEL` | 기본값 사용 시 생략 가능 | 선택 |
+
+5. **Deploy** → 배포 URL에서 확인: 비로그인 생성 → 로그인 모달 / curl POST `/api/generate` → 401
+6. 프로덕션 필수 env가 빠지면 API가 **500 "서버 설정 오류"** 로 명확히 실패함 (개발 모드 조용한 폴백은 프로덕션에서 비활성) — Vercel 함수 로그에서 `[env] 프로덕션 필수 환경변수 누락: ...` 확인 가능
+
 ## 실행 시 주의
 
 - 데스크톱 홈의 옛 `techdoc-ai` 폴더 아님 — **반드시 `실험실\techdoc-ai-next`에서 실행**
