@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Loader2, Plus, Sparkles, X } from "lucide-react";
 import { PRESET_STACKS } from "@/lib/constants";
-import type { GenerateInput } from "@/lib/schema";
+import { getInputErrors, type GenerateInput, type InputFieldErrors } from "@/lib/schema";
 
 interface Props {
   generating: boolean;
@@ -17,21 +17,38 @@ export default function InputForm({ generating, loadingLabel, onGenerate }: Prop
   const [customStack, setCustomStack] = useState("");
   const [features, setFeatures] = useState("");
   const [trouble, setTrouble] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<InputFieldErrors>({});
 
   const canGenerate = Boolean(projectName.trim() && features.trim() && stacks.length > 0);
 
-  const toggleStack = (s: string) =>
+  const clearError = (field: keyof InputFieldErrors) =>
+    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+
+  const toggleStack = (s: string) => {
+    clearError("stacks");
     setStacks((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+  };
 
   const addCustomStack = () => {
     const v = customStack.trim();
-    if (v && !stacks.includes(v)) setStacks((p) => [...p, v]);
+    if (v && !stacks.includes(v)) {
+      clearError("stacks");
+      setStacks((p) => [...p, v]);
+    }
     setCustomStack("");
   };
 
   const handleGenerate = () => {
     if (!canGenerate || generating) return;
-    onGenerate({ name: projectName.trim(), stacks, features, trouble });
+    const input = { name: projectName.trim(), stacks, features, trouble };
+    // 서버와 같은 규칙으로 사전 검증 — 통과 못 하면 API 호출 자체를 안 한다
+    const errors = getInputErrors(input);
+    if (Object.values(errors).some(Boolean)) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
+    onGenerate(input);
   };
 
   return (
@@ -44,10 +61,16 @@ export default function InputForm({ generating, loadingLabel, onGenerate }: Prop
         <input
           id="project-name"
           value={projectName}
-          onChange={(e) => setProjectName(e.target.value)}
+          onChange={(e) => {
+            clearError("name");
+            setProjectName(e.target.value);
+          }}
           placeholder="예: 클라우드 비용 모니터링 대시보드"
-          className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-blue-600 transition-colors"
+          className={`w-full bg-zinc-950 border rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-blue-600 transition-colors ${
+            fieldErrors.name ? "border-red-800" : "border-zinc-800"
+          }`}
         />
+        {fieldErrors.name && <p className="mt-1.5 text-xs text-red-400">{fieldErrors.name}</p>}
 
         {/* 기술 스택 */}
         <label className="block text-sm font-semibold text-zinc-300 mt-6 mb-2">
@@ -102,6 +125,7 @@ export default function InputForm({ generating, loadingLabel, onGenerate }: Prop
             <Plus className="w-4 h-4" />
           </button>
         </div>
+        {fieldErrors.stacks && <p className="mt-1.5 text-xs text-red-400">{fieldErrors.stacks}</p>}
 
         {/* 핵심 기능 */}
         <label htmlFor="features" className="block text-sm font-semibold text-zinc-300 mt-6 mb-2">
@@ -110,13 +134,21 @@ export default function InputForm({ generating, loadingLabel, onGenerate }: Prop
         <textarea
           id="features"
           value={features}
-          onChange={(e) => setFeatures(e.target.value)}
+          onChange={(e) => {
+            clearError("features");
+            setFeatures(e.target.value);
+          }}
           rows={4}
           placeholder={
             "한 줄에 하나씩 적어주세요.\n예:\nAWS 비용을 실시간으로 수집해 대시보드로 시각화\n예산 초과 시 Slack 알림 발송"
           }
-          className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-blue-600 transition-colors resize-none leading-relaxed"
+          className={`w-full bg-zinc-950 border rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-blue-600 transition-colors resize-none leading-relaxed ${
+            fieldErrors.features ? "border-red-800" : "border-zinc-800"
+          }`}
         />
+        {fieldErrors.features && (
+          <p className="mt-1.5 text-xs text-red-400">{fieldErrors.features}</p>
+        )}
 
         {/* 트러블슈팅 */}
         <label htmlFor="trouble" className="block text-sm font-semibold text-zinc-300 mt-6 mb-2">
