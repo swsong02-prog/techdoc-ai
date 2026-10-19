@@ -17,5 +17,5 @@
     "paths": { "@/*": ["./*"] }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "techdoc-ai-prototype.jsx"]
+  "exclude": ["node_modules"]
 }

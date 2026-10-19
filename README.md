@@ -40,12 +40,10 @@ app/                 화면과 API 라우트 (api/generate, api/usage, auth/call
 components/          입력 폼, 결과 뷰어, 로그인 모달
 lib/                 프롬프트, 예시 문서, 스키마, LLM 선택, 사용량 제한
 supabase/setup.sql   profiles 테이블과 RLS 정책
-techdoc-ai-prototype.jsx   처음 만든 화면 시안 (빌드에는 포함되지 않음)
-PROJECT_LOG.md       작업 기록
 ```
 
 ## 아직 못 한 것
 
-- 배포 (Vercel 배포 절차는 `PROJECT_LOG.md`에 정리해 두었습니다)
+- Vercel 배포
 - 결제 (버튼 화면만 있습니다)
 - 구글 로그인 동의 화면에 supabase.co 주소가 보이는 문제
